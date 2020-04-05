@@ -1,6 +1,6 @@
 # Introduction
 
-a pytorch ocr server made using craft
+a pytorch ocr server made using pytorch
 
 ## Getting Started
 
