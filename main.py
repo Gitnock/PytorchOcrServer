@@ -1,14 +1,9 @@
 import io
 import json
-
 import torch
 import torch.nn as nn
 import torch.backends.cudnn as cudnn
 from torch.autograd import Variable
-from torchvision import models
-import torchvision.transforms as transforms
-
-import mss
 import cv2
 import pytesseract
 # from skimage import io
@@ -35,6 +30,7 @@ def copyStateDict(state_dict):
         name = ".".join(k.split(".")[start_idx:])
         new_state_dict[name] = v
     return new_state_dict
+
 
  # load net
 net = CRAFT()     # initialize
@@ -68,42 +64,43 @@ def predict():
 
 
         #render boxs on detected text
-        img = np.array(image)
-        verticals=None
-        texts=None
-        for i, box in enumerate(polys):
-                poly = np.array(box).astype(np.int32).reshape((-1))
+        # img = np.array(image)
+        # verticals=None
+        # texts=None
+        # for i, box in enumerate(polys):
+        #         poly = np.array(box).astype(np.int32).reshape((-1))
 
-                poly = poly.reshape(-1, 2)
-                cv2.polylines(img, [poly.reshape((-1, 1, 2))], True, color=(0, 0, 255), thickness=2)
-                ptColor = (0, 255, 255)
-                if verticals is not None:
-                    if verticals[i]:
-                        ptColor = (255, 0, 0)
+        #         poly = poly.reshape(-1, 2)
+        #         cv2.polylines(img, [poly.reshape((-1, 1, 2))], True, color=(0, 0, 255), thickness=2)
+        #         ptColor = (0, 255, 255)
+        #         if verticals is not None:
+        #             if verticals[i]:
+        #                 ptColor = (255, 0, 0)
 
-                if texts is not None:
-                    font = cv2.FONT_HERSHEY_SIMPLEX
-                    font_scale = 0.5
-                    cv2.putText(img, "{}".format(texts[i]), (poly[0][0]+1, poly[0][1]+1), font, font_scale, (0, 0, 0), thickness=1)
-                    cv2.putText(img, "{}".format(texts[i]), tuple(poly[0]), font, font_scale, (0, 255, 255), thickness=1)
+        #         if texts is not None:
+        #             font = cv2.FONT_HERSHEY_SIMPLEX
+        #             font_scale = 0.5
+        #             cv2.putText(img, "{}".format(texts[i]), (poly[0][0]+1, poly[0][1]+1), font, font_scale, (0, 0, 0), thickness=1)
+        #             cv2.putText(img, "{}".format(texts[i]), tuple(poly[0]), font, font_scale, (0, 255, 255), thickness=1)
 
 
-
+        #get text from detected words
+        text = []
         for i, bbs in enumerate(bboxes):
             box = bounding_box(bbs)
             roi = image[box[0][1]:box[1][1],box[0][0]:box[1][0]]
 
             config = ("-l eng --oem 1 --psm 7")
-            text = pytesseract.image_to_string(roi, config=config)
+            text.append( pytesseract.image_to_string(roi, config=config))
 
-            print(text)
+            # print(text)
             # Close when found ACCEPT
             # if text == "ACCEPT":
             #       print(text)
         
 
 
-        # OLD ver THAT CROPS IMAGE
+        #OLD ver THAT CROPS IMAGE
         # #read text
         # for i, bbs in enumerate(bboxes):
         #         crop = bounding_box(bbs)
@@ -115,8 +112,7 @@ def predict():
 
 
 
-
-        return send_file(io.BytesIO(img), mimetype='image/jpg')
+        return jsonify({'words': text})
 
 
 
